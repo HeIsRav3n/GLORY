@@ -693,8 +693,70 @@ const revEls=document.querySelectorAll(".reveal");
 const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add("up");}),{threshold:0.08,rootMargin:"0px 0px -40px 0px"});
 revEls.forEach(el=>obs.observe(el));
 
-let ambCtx=null,playing=false,ambNodes=[];
-document.getElementById("music-fab").addEventListener("click",()=>{if(!playing){ambCtx=new(window.AudioContext||window.webkitAudioContext)();const freqs=[261.63,329.63,392.0,523.25,659.25];ambNodes=freqs.map((freq,i)=>{const osc=ambCtx.createOscillator(),gain=ambCtx.createGain(),lfo=ambCtx.createOscillator(),lfoG=ambCtx.createGain();osc.type="sine";osc.frequency.value=freq;lfo.type="sine";lfo.frequency.value=0.15+i*0.06;lfoG.gain.value=1.5;gain.gain.value=0.028;lfo.connect(lfoG);lfoG.connect(osc.frequency);osc.connect(gain);gain.connect(ambCtx.destination);osc.start();lfo.start();return{osc,gain};});playing=true;document.getElementById("music-fab").textContent="🔇";}else{ambNodes.forEach(({osc,gain})=>{gain.gain.setTargetAtTime(0,ambCtx.currentTime,0.4);osc.stop(ambCtx.currentTime+1);});ambNodes=[];playing=false;document.getElementById("music-fab").textContent="🎵";}});
+let ambCtx=null,playing=false,hbTimeout=null;
+function playHappyBirthday(ctx){
+  // Happy Birthday to You - notes [frequency, duration_beats]
+  const BPM=88;const beat=60/BPM;
+  const notes=[
+    [392.00,0.75],[392.00,0.25],[440.00,1],[392.00,1],[523.25,1],[493.88,2],
+    [392.00,0.75],[392.00,0.25],[440.00,1],[392.00,1],[587.33,1],[523.25,2],
+    [392.00,0.75],[392.00,0.25],[783.99,1],[659.25,1],[523.25,1],[493.88,1],[440.00,2],
+    [698.46,0.75],[698.46,0.25],[659.25,1],[523.25,1],[587.33,1],[523.25,3]
+  ];
+  const master=ctx.createGain();master.gain.value=0.32;
+  const reverb=ctx.createGain();reverb.gain.value=0.18;
+  master.connect(ctx.destination);reverb.connect(ctx.destination);
+  let t=ctx.currentTime+0.05;
+  notes.forEach(([freq,dur])=>{
+    const dur_s=dur*beat;
+    const osc=ctx.createOscillator();
+    const g=ctx.createGain();
+    osc.type="triangle";
+    osc.frequency.value=freq;
+    // Harmonic overtone for warmth
+    const osc2=ctx.createOscillator();
+    const g2=ctx.createGain();
+    osc2.type="sine";osc2.frequency.value=freq*2;g2.gain.value=0.08;
+    osc2.connect(g2);g2.connect(master);osc2.start(t);osc2.stop(t+dur_s);
+    // Attack & release envelope
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(1,t+0.04);
+    g.gain.setValueAtTime(1,t+dur_s*0.6);
+    g.gain.exponentialRampToValueAtTime(0.001,t+dur_s*0.95);
+    osc.connect(g);g.connect(master);
+    // Reverb tail
+    const rOsc=ctx.createOscillator(),rG=ctx.createGain();
+    rOsc.type="sine";rOsc.frequency.value=freq;
+    rG.gain.setValueAtTime(0,t+dur_s*0.5);
+    rG.gain.linearRampToValueAtTime(0.06,t+dur_s*0.7);
+    rG.gain.exponentialRampToValueAtTime(0.001,t+dur_s+0.4);
+    rOsc.connect(rG);rG.connect(reverb);rOsc.start(t);rOsc.stop(t+dur_s+0.5);
+    osc.start(t);osc.stop(t+dur_s);
+    t+=dur_s;
+  });
+  // Loop: schedule next iteration
+  const totalDur=(t-ctx.currentTime)+0.8;
+  return totalDur;
+}
+function startHappyBirthday(){
+  if(!playing)return;
+  const dur=playHappyBirthday(ambCtx);
+  hbTimeout=setTimeout(startHappyBirthday,dur*1000);
+}
+document.getElementById("music-fab").addEventListener("click",()=>{
+  if(!playing){
+    ambCtx=new(window.AudioContext||window.webkitAudioContext)();
+    playing=true;
+    document.getElementById("music-fab").textContent="🔇";
+    startHappyBirthday();
+  }else{
+    playing=false;
+    if(hbTimeout)clearTimeout(hbTimeout);
+    if(ambCtx)ambCtx.close();
+    ambCtx=null;
+    document.getElementById("music-fab").textContent="🎵";
+  }
+});
 
 addEventListener("scroll",()=>{const y=scrollY;const bg=document.querySelector(".hero-bg");if(bg)bg.style.transform=`scale(1.06) translateY(${y*0.2}px)`;});
 </script>
