@@ -297,7 +297,7 @@ footer{padding:4rem;border-top:1px solid rgba(184,137,42,0.12);background:var(--
 <div id="song-screen">
   <div class="song-note-anim">🎂</div>
   <p class="song-title">Happy Birthday, Nne</p>
-  <p class="song-name">Piano Romantic by Toneloom</p>
+  <p class="song-name">Happy Birthday Sound by Toneloom</p>
   <div class="audio-bars"><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div><div class="audio-bar"></div></div>
   <div class="song-progress"><div class="song-progress-fill" id="prog-fill"></div></div>
   <button class="skip-btn" onclick="skipSong()">Skip to website</button>
@@ -537,17 +537,27 @@ let envOpened=false;
 function openEnvelope(){if(envOpened)return;envOpened=true;document.getElementById("env-body").classList.add("opening");setTimeout(showSongScreen,1400);}
 
 let songStart=0,songDuration=30000,audioContext=null,songNodes=[];
-function showSongScreen(){document.getElementById("envelope-screen").classList.add("hide");document.getElementById("song-screen").classList.add("show");playRomanticPiano();startProgress();setTimeout(skipSong,songDuration+300);}
+function showSongScreen(){document.getElementById("envelope-screen").classList.add("hide");document.getElementById("song-screen").classList.add("show");playHappyBirthdayIntro();startProgress();setTimeout(skipSong,songDuration+300);}
 function skipSong(){document.getElementById("song-screen").classList.add("hide");document.getElementById("main-site").classList.add("show");spawnPetals();setTimeout(launchConfetti,1200);stopPiano();}
 function startProgress(){songStart=Date.now();const fill=document.getElementById("prog-fill");function t(){const p=Math.min(100,(Date.now()-songStart)/songDuration*100);fill.style.width=p+"%";if(p<100)requestAnimationFrame(t);}requestAnimationFrame(t);}
 
-function playRomanticPiano(){
+function playHappyBirthdayIntro(){
   try{
     audioContext=new(window.AudioContext||window.webkitAudioContext)();
     const ctx=audioContext;
-    const master=ctx.createGain();master.gain.value=0.22;master.connect(ctx.destination);
-    const melody=[[523.25,0,2],[659.25,0.5,1.5],[783.99,1,2],[659.25,1.8,1],[523.25,2.4,1.8],[440,3,1.5],[392,3.6,2],[523.25,5,1.5],[587.33,5.5,1.5],[659.25,6,2],[783.99,6.6,1.8],[880,7.2,2],[783.99,8,1.5],[659.25,8.6,2],[523.25,10,2],[493.88,10.6,1.5],[440,11.2,2],[392,12,1.5],[349.23,12.6,2],[329.63,13.2,2.5],[523.25,16,2],[659.25,16.5,1.5],[783.99,17,2],[659.25,17.8,1],[523.25,18.4,1.8],[440,19,1.5],[392,19.6,2.5],[523.25,22,3],[523.25,26,1.5],[659.25,26.6,2],[783.99,27.2,2.5],[880,28,3.5]];
-    const bass=[[130.81,0,4],[164.81,4,4],[130.81,8,4],[98,12,4],[130.81,16,4],[164.81,20,4],[130.81,24,4],[98,28,2]];
+    const master=ctx.createGain();master.gain.value=0.25;master.connect(ctx.destination);
+    const melody=[
+      [392.00, 0, 0.6], [392.00, 0.6, 0.2], [440.00, 0.8, 0.8], [392.00, 1.6, 0.8], [523.25, 2.4, 0.8], [493.88, 3.2, 1.6],
+      [392.00, 4.8, 0.6], [392.00, 5.4, 0.2], [440.00, 5.6, 0.8], [392.00, 6.4, 0.8], [587.33, 7.2, 0.8], [523.25, 8.0, 1.6],
+      [392.00, 9.6, 0.6], [392.00, 10.2, 0.2], [783.99, 10.4, 0.8], [659.25, 11.2, 0.8], [523.25, 12.0, 0.8], [493.88, 12.8, 0.8], [440.00, 13.6, 1.6],
+      [698.46, 16.0, 0.6], [698.46, 16.6, 0.2], [659.25, 16.8, 0.8], [523.25, 17.6, 0.8], [587.33, 18.4, 0.8], [523.25, 19.2, 2.4]
+    ];
+    const bass=[
+      [130.81, 0, 3.2], [98.00, 3.2, 1.6],
+      [98.00, 4.8, 3.2], [130.81, 8.0, 1.6],
+      [130.81, 9.6, 3.2], [87.31, 12.8, 2.4],
+      [87.31, 16.0, 1.6], [130.81, 17.6, 0.8], [98.00, 18.4, 0.8], [130.81, 19.2, 2.4]
+    ];
     function note(freq,start,dur,vol,type){const osc=ctx.createOscillator(),g=ctx.createGain();osc.type=type;osc.frequency.value=freq;const t0=ctx.currentTime+start;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+0.06);g.gain.setValueAtTime(vol,t0+dur*0.7);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);osc.connect(g);g.connect(master);osc.start(t0);osc.stop(t0+dur+0.1);songNodes.push(osc);}
     melody.forEach(([f,s,d])=>note(f,s,d,0.16,"sine"));
     bass.forEach(([f,s,d])=>note(f,s,d,0.06,"triangle"));
